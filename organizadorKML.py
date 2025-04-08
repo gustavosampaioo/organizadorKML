@@ -11,11 +11,10 @@ def remover_links_google_earth(root):
                 if rel == "app" and "google.com/earth" in href:
                     parent.remove(elem)
 
-def organizar_placemarks_por_pasta(conteudo_kml, sigla, subgrupo_inicial, sequencia_inicial=1, pasta_contador_inicial=1):
+def organizar_placemarks_por_pasta(conteudo_kml, sigla, subgrupo_inicial, sequencia_inicial=1, pasta_contador_inicial=1, pon_base=0):
     try:
-        # Validação de subgrupo inicial
-        if not (0 <= subgrupo_inicial <= 16):
-            st.error("O valor do SUBGRUPO (PON) inicial deve estar entre 0 e 16.")
+        if pon_base not in [0, 1]:
+            st.error("O valor da PON BASE deve ser 0 ou 1.")
             return None
 
         tree = ET.ElementTree(ET.fromstring(conteudo_kml))
@@ -28,10 +27,10 @@ def organizar_placemarks_por_pasta(conteudo_kml, sigla, subgrupo_inicial, sequen
         rota_contador = 1
         pasta_contador = pasta_contador_inicial
 
-        # Subgrupo manual
         subgrupo = subgrupo_inicial
-        subgrupo_base = subgrupo_inicial
-        limite_subgrupo = 15 if subgrupo_base == 0 else 16
+        valor_reinicio = pon_base
+        limite = 15 if pon_base == 0 else 16
+        limite_maximo = valor_reinicio + limite
 
         for i, folder in enumerate(folders):
             if i > 0 and i % 16 == 0:
@@ -40,26 +39,26 @@ def organizar_placemarks_por_pasta(conteudo_kml, sigla, subgrupo_inicial, sequen
             placemarks = folder.findall(".//kml:Placemark", ns)
 
             for contagem_local, placemark in enumerate(placemarks, start=1):
-                novo_nome = f"ROTA-{rota_contador}_CTO-{contagem_local}"
-                descricao_texto = f"{sigla}-{sequencia_global:04d} (1/{pasta_contador}/{subgrupo}) CTO-{contagem_local}"
+                nome_formatado = f"ROTA-{rota_contador}_CTO-{contagem_local}"
+                desc_formatada = f"{sigla}-{sequencia_global:04d} (1/{pasta_contador}/{subgrupo}) CTO-{contagem_local}"
                 sequencia_global += 1
 
                 nome = placemark.find("kml:name", ns)
                 if nome is None:
                     nome = ET.SubElement(placemark, f"{{{ns['kml']}}}name")
-                nome.text = novo_nome
+                nome.text = nome_formatado
 
                 descricao = placemark.find("kml:description", ns)
                 if descricao is None:
                     descricao = ET.SubElement(placemark, f"{{{ns['kml']}}}description")
-                descricao.text = descricao_texto
+                descricao.text = desc_formatada
 
             rota_contador += 1
 
-            # Incremento e reinício do subgrupo
+            # Rotação do subgrupo com base no valor inicial e PON base
             subgrupo += 1
-            if subgrupo > subgrupo_base + limite_subgrupo - 1:
-                subgrupo = subgrupo_base
+            if subgrupo > limite_maximo:
+                subgrupo = valor_reinicio
 
         remover_links_google_earth(root)
 
@@ -73,6 +72,7 @@ def organizar_placemarks_por_pasta(conteudo_kml, sigla, subgrupo_inicial, sequen
     except Exception as e:
         st.error(f"Erro ao processar o arquivo: {e}")
         return None
+
 
 
 
