@@ -29,7 +29,7 @@ def organizar_placemarks_por_pasta(conteudo_kml, sigla, subgrupo_inicial, sequen
         subgrupo = subgrupo_inicial
 
         for i, folder in enumerate(folders):
-            # Incrementa pasta a cada 16 pastas
+            # Incrementa pasta_contador a cada 16 folders
             if i > 0 and i % 16 == 0:
                 pasta_contador += 1
 
@@ -52,7 +52,7 @@ def organizar_placemarks_por_pasta(conteudo_kml, sigla, subgrupo_inicial, sequen
 
             rota_contador += 1
 
-            # Avança e reinicia o subgrupo conforme lógica de PON base
+            # Subgrupo roda em ciclo de 16 (com base no pon_base)
             subgrupo += 1
             if pon_base == 0 and subgrupo > 15:
                 subgrupo = 0
@@ -72,7 +72,6 @@ def organizar_placemarks_por_pasta(conteudo_kml, sigla, subgrupo_inicial, sequen
         st.error(f"Erro ao processar o arquivo: {e}")
         return None
 
-
 # ========== INTERFACE STREAMLIT ==========
 
 st.title("Organizador de Placemarks - KML")
@@ -87,35 +86,39 @@ config_manual = st.checkbox("Configuração Manual")
 
 if config_manual:
     sequencia_manual = st.number_input("Sequência Global Inicial:", min_value=1, value=1, step=1)
-    subgrupo_manual = st.number_input("Valor inicial para SUBGRUPO (PON):", min_value=0, value=0, step=1)
+    subgrupo_manual = st.number_input("Valor inicial para SUBGRUPO (PON):", min_value=0, value=pon_inicial, step=1)
     pasta_manual = st.number_input("Pasta Contador Inicial:", min_value=1, value=1, step=1)
 else:
     sequencia_manual = 1
     subgrupo_manual = pon_inicial
     pasta_manual = 1
 
-# Botão de Processamento
-if st.button("Organizar KML"):
-    if not arquivo_kml:
-        st.warning("Por favor, envie um arquivo KML.")
-    elif not sigla:
-        st.warning("Por favor, insira a sigla para os placemarks.")
-    else:
-        conteudo_kml = arquivo_kml.read()
-        novo_arquivo = organizar_placemarks_por_pasta(
-            conteudo_kml,
-            sigla,
-            subgrupo_manual,
-            sequencia_inicial=sequencia_manual,
-            pasta_contador_inicial=pasta_manual,
-            pon_base=pon_inicial
-        )
-
-        if novo_arquivo:
-            st.success("Arquivo processado com sucesso!")
-            st.download_button(
-                label="Baixar KML Organizado",
-                data=novo_arquivo,
-                file_name=arquivo_kml.name.replace(".kml", "_organizado.kml"),
-                mime="application/vnd.google-earth.kml+xml"
+# Validação de subgrupo
+limite_subgrupo = 15 if pon_inicial == 0 else 16
+if subgrupo_manual > limite_subgrupo:
+    st.error(f"O valor de SUBGRUPO (PON) deve ser no máximo {limite_subgrupo} para PON INICIAL = {pon_inicial}.")
+else:
+    if st.button("Organizar KML"):
+        if not arquivo_kml:
+            st.warning("Por favor, envie um arquivo KML.")
+        elif not sigla:
+            st.warning("Por favor, insira a sigla para os placemarks.")
+        else:
+            conteudo_kml = arquivo_kml.read()
+            novo_arquivo = organizar_placemarks_por_pasta(
+                conteudo_kml,
+                sigla,
+                subgrupo_manual,
+                sequencia_inicial=sequencia_manual,
+                pasta_contador_inicial=pasta_manual,
+                pon_base=pon_inicial
             )
+
+            if novo_arquivo:
+                st.success("Arquivo processado com sucesso!")
+                st.download_button(
+                    label="Baixar KML Organizado",
+                    data=novo_arquivo,
+                    file_name=arquivo_kml.name.replace(".kml", "_organizado.kml"),
+                    mime="application/vnd.google-earth.kml+xml"
+                )
