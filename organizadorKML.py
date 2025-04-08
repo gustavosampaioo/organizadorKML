@@ -68,16 +68,6 @@ def organizar_placemarks_por_pasta(conteudo_kml, sigla, subgrupo_inicial, sequen
         st.error(f"Erro ao processar o arquivo: {e}")
         return None
 
-
-    except Exception as e:
-        st.error(f"Erro ao processar o arquivo: {e}")
-        return None
-
-
-    except Exception as e:
-        st.error(f"Erro ao processar o arquivo: {e}")
-        return None
-
 # Interface Streamlit
 st.title("Organizador de Placemarks - KML")
 st.markdown("Organize os placemarks por subpastas e defina o valor inicial do **SUBGRUPO (PON INICIAL)**.")
