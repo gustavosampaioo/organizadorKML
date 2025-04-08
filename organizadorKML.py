@@ -3,7 +3,6 @@ from xml.etree import ElementTree as ET
 import tempfile
 
 def remover_links_google_earth(root):
-    """Remove elementos <link> com referência ao Google Earth."""
     for parent in root.iter():
         for elem in list(parent):
             if elem.tag.endswith('link'):
@@ -13,7 +12,6 @@ def remover_links_google_earth(root):
                     parent.remove(elem)
 
 def organizar_placemarks_por_pasta(conteudo_kml, sigla, subgrupo, sequencia_inicial=1, pasta_contador_inicial=1):
-    """Organiza os placemarks por subpastas internas e ajusta nome e descrição."""
     try:
         tree = ET.ElementTree(ET.fromstring(conteudo_kml))
         root = tree.getroot()
@@ -71,13 +69,16 @@ sigla = st.text_input("Digite a sigla para os Placemarks:", "").strip().upper()
 pon_inicial = st.selectbox("Selecione a PON INICIAL (Subgrupo inicial):", options=[0, 1])
 arquivo_kml = st.file_uploader("Envie o arquivo KML", type=["kml"])
 
-# Configuração Manual
-config_manual = st.checkbox("Configuração Manual")
+# Configuração Manual com session_state
+if "config_manual" not in st.session_state:
+    st.session_state.config_manual = False
 
-if config_manual:
-    sequencia_global_manual = st.number_input("Valor inicial para SEQUÊNCIA GLOBAL:", min_value=1, value=1)
-    pasta_contador_manual = st.number_input("Valor inicial para PASTA CONTADOR:", min_value=1, value=1)
-    subgrupo_manual = st.number_input("Valor inicial para SUBGRUPO (PON):", min_value=0, value=pon_inicial)
+st.session_state.config_manual = st.checkbox("Configuração Manual", value=st.session_state.config_manual)
+
+if st.session_state.config_manual:
+    sequencia_global_manual = st.number_input("Valor inicial para SEQUÊNCIA GLOBAL:", min_value=1, value=1, step=1)
+    pasta_contador_manual = st.number_input("Valor inicial para PASTA CONTADOR:", min_value=1, value=1, step=1)
+    subgrupo_manual = st.number_input("Valor inicial para SUBGRUPO (PON):", min_value=0, value=pon_inicial, step=1)
 else:
     sequencia_global_manual = 1
     pasta_contador_manual = 1
