@@ -86,8 +86,9 @@ config_manual = st.checkbox("Configuração Manual")
 
 if config_manual:
     sequencia_manual = st.number_input("Sequência Global Inicial:", min_value=1, value=1, step=1)
-    subgrupo_manual = st.number_input("Valor inicial para SUBGRUPO (PON):", min_value=0, value=pon_inicial, step=1)
     pasta_manual = st.number_input("Pasta Contador Inicial:", min_value=1, value=1, step=1)
+    subgrupo_manual = st.number_input("Valor inicial para SUBGRUPO (PON):", min_value=0, value=pon_inicial, step=1)
+    
 else:
     sequencia_manual = 1
     subgrupo_manual = pon_inicial
