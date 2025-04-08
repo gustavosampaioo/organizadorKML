@@ -13,7 +13,7 @@ def remover_links_google_earth(root):
 
 def organizar_placemarks_por_pasta(conteudo_kml, sigla, subgrupo_inicial, sequencia_inicial=1, pasta_contador_inicial=1):
     try:
-        # Validação do subgrupo
+        # Validação de subgrupo inicial
         if not (0 <= subgrupo_inicial <= 16):
             st.error("O valor do SUBGRUPO (PON) inicial deve estar entre 0 e 16.")
             return None
@@ -26,14 +26,17 @@ def organizar_placemarks_por_pasta(conteudo_kml, sigla, subgrupo_inicial, sequen
         folders = root.findall(".//kml:Folder/kml:Folder", ns)
         sequencia_global = sequencia_inicial
         rota_contador = 1
-        pasta_contador_base = pasta_contador_inicial
+        pasta_contador = pasta_contador_inicial
 
+        # Subgrupo manual
         subgrupo = subgrupo_inicial
         subgrupo_base = subgrupo_inicial
-        limite_subgrupo = 16  # Sempre reinicia a cada 16 passos
+        limite_subgrupo = 15 if subgrupo_base == 0 else 16
 
         for i, folder in enumerate(folders):
-            pasta_contador = pasta_contador_base + (i // 16)
+            if i > 0 and i % 16 == 0:
+                pasta_contador += 1
+
             placemarks = folder.findall(".//kml:Placemark", ns)
 
             for contagem_local, placemark in enumerate(placemarks, start=1):
@@ -53,9 +56,9 @@ def organizar_placemarks_por_pasta(conteudo_kml, sigla, subgrupo_inicial, sequen
 
             rota_contador += 1
 
-            # Incrementa e reinicia o subgrupo manualmente baseado apenas no valor inicial
+            # Incremento e reinício do subgrupo
             subgrupo += 1
-            if subgrupo >= subgrupo_base + limite_subgrupo:
+            if subgrupo > subgrupo_base + limite_subgrupo - 1:
                 subgrupo = subgrupo_base
 
         remover_links_google_earth(root)
@@ -70,6 +73,7 @@ def organizar_placemarks_por_pasta(conteudo_kml, sigla, subgrupo_inicial, sequen
     except Exception as e:
         st.error(f"Erro ao processar o arquivo: {e}")
         return None
+
 
 
 # Interface Streamlit
