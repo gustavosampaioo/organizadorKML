@@ -69,8 +69,8 @@ def organizar_placemarks_por_pasta(conteudo_kml, sigla, pon_inicial, manual=Fals
 st.title("Organizador de Placemarks - KML")
 st.markdown("Organize os placemarks por subpastas e defina o valor inicial do **SUBGRUPO (PON INICIAL)**.")
 
-sigla = st.text_input("Digite a sigla para os Placemarks:", "").strip().upper()
-pon_inicial = st.selectbox("Selecione a PON INICIAL (Subgrupo reinício):", options=[0, 1])
+sigla = st.text_input("Digite a sigla para as CTO'S:", "").strip().upper()
+pon_inicial = st.selectbox("Selecione a PON INICIAL (0 ou 1 - Depende da OLT - Ex: Huawei 0 e Datacom 1):", options=[0, 1])
 
 manual = st.checkbox("Configuração Manual")
 if manual:
