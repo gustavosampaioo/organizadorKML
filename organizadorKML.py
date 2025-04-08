@@ -55,10 +55,12 @@ def organizar_placemarks_por_pasta(conteudo_kml, sigla, subgrupo_inicial, sequen
 
             rota_contador += 1
 
-            # Rotação do subgrupo com base no valor inicial e PON base
+            # Lógica de rotação baseada em PON BASE, sempre com ciclo fixo
             subgrupo += 1
-            if subgrupo > limite_maximo:
-                subgrupo = valor_reinicio
+            if pon_base == 0 and subgrupo > 15:
+                subgrupo = 0
+            elif pon_base == 1 and subgrupo > 16:
+                subgrupo = 1
 
         remover_links_google_earth(root)
 
