@@ -3,7 +3,6 @@ from xml.etree import ElementTree as ET
 import tempfile
 
 def remover_links_google_earth(root):
-    """Remove elementos <link> com referência ao Google Earth."""
     for parent in root.iter():
         for elem in list(parent):
             if elem.tag.endswith('link'):
@@ -13,7 +12,6 @@ def remover_links_google_earth(root):
                     parent.remove(elem)
 
 def organizar_placemarks_por_pasta(conteudo_kml, sigla, pon_inicial, manual=False, seq_inicial=1, pasta_inicial=1, subgrupo_inicial=None):
-    """Organiza os placemarks por subpastas internas e ajusta nome e descrição."""
     try:
         tree = ET.ElementTree(ET.fromstring(conteudo_kml))
         root = tree.getroot()
@@ -26,7 +24,7 @@ def organizar_placemarks_por_pasta(conteudo_kml, sigla, pon_inicial, manual=Fals
         pasta_contador = pasta_inicial if manual else 1
         rota_contador = 1
         subgrupo = subgrupo_inicial if manual else pon_inicial
-        pon_base = pon_inicial  # para saber se o ciclo reinicia em 0 ou 1
+        pon_base = pon_inicial
 
         for i, folder in enumerate(folders):
             placemarks = folder.findall(".//kml:Placemark", ns)
@@ -55,8 +53,8 @@ def organizar_placemarks_por_pasta(conteudo_kml, sigla, pon_inicial, manual=Fals
             elif pon_base == 1 and subgrupo > 16:
                 subgrupo = 1
 
-            # Incrementa a cada 16 rotas
-            if rota_contador > 1 and (rota_contador - 1) % 16 == 0:
+            # Incrementar pasta contador a cada 16 rotas
+            if (rota_contador - 1) % 16 == 0:
                 pasta_contador += 1
 
         remover_links_google_earth(root)
@@ -72,11 +70,10 @@ def organizar_placemarks_por_pasta(conteudo_kml, sigla, pon_inicial, manual=Fals
         st.error(f"Erro ao processar o arquivo: {e}")
         return None
 
-# --- Interface Streamlit ---
+# Interface Streamlit
 st.title("Organizador de Placemarks - KML")
 st.markdown("Organize os placemarks por subpastas e defina o valor inicial do **SUBGRUPO (PON INICIAL)**.")
 
-# Entradas básicas
 sigla = st.text_input("Digite a sigla para os Placemarks:", "").strip().upper()
 pon_inicial = st.selectbox("Selecione a PON INICIAL (Subgrupo reinício):", options=[0, 1])
 
@@ -96,10 +93,7 @@ else:
     pasta_inicial = 1
     subgrupo_inicial = pon_inicial
 
-# Upload
 arquivo_kml = st.file_uploader("Envie o arquivo KML", type=["kml"])
-
-# Botão
 processar = st.button("Organizar KML")
 
 if processar:
