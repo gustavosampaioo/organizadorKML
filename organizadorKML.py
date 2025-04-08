@@ -75,12 +75,12 @@ pon_inicial = st.selectbox("Selecione a PON INICIAL (Subgrupo reinício):", opti
 manual = st.checkbox("Configuração Manual")
 if manual:
     st.markdown("### Configurações Avançadas")
-    seq_inicial = st.number_input("Valor inicial para SEQUÊNCIA GLOBAL:", min_value=1, value=1)
-    pasta_inicial = st.number_input("Valor inicial para PASTA CONTADOR:", min_value=1, value=1)
     rota_inicial = st.number_input("Valor inicial para ROTA:", min_value=1, value=1)
+    seq_inicial = st.number_input("Valor inicial para ID CTO:", min_value=1, value=1)
+    pasta_inicial = st.number_input("Valor inicial para PLACA:", min_value=1, value=1)
     max_subgrupo = 16 if pon_inicial == 1 else 15
     subgrupo_inicial = st.number_input(
-        "Valor inicial para SUBGRUPO (PON):",
+        "Valor inicial para PON:",
         min_value=0, max_value=max_subgrupo, value=pon_inicial
     )
 else:
