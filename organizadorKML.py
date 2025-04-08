@@ -103,7 +103,7 @@ if processar:
         novo_arquivo = organizar_placemarks_por_pasta(
             conteudo_kml,
             sigla,
-            subgrupo=subgrupo_manual,
+            subgrupo_inicial=subgrupo_manual,
             sequencia_inicial=sequencia_global_manual,
             pasta_contador_inicial=pasta_contador_manual
         )
