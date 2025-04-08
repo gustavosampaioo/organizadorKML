@@ -1,7 +1,6 @@
 import streamlit as st
 from xml.etree import ElementTree as ET
 import tempfile
-import os
 
 def remover_links_google_earth(root):
     """Remove elementos <link> com referência ao Google Earth."""
@@ -25,7 +24,7 @@ def organizar_placemarks_por_pasta(conteudo_kml, sigla, pon_inicial):
         sequencia_global = 1
         pasta_contador = 1
         rota_contador = 1
-        subgrupo = pon_inicial  # Subgrupo começa com valor definido pelo usuário
+        subgrupo = pon_inicial  # Começa com o valor escolhido pelo usuário
 
         for i, folder in enumerate(folders):
             if i > 0 and i % 16 == 0:
@@ -51,10 +50,10 @@ def organizar_placemarks_por_pasta(conteudo_kml, sigla, pon_inicial):
             rota_contador += 1
             subgrupo += 1
 
-        # Remove os links do Google Earth
+        # Remove links do Google Earth
         remover_links_google_earth(root)
 
-        # Salvar o novo conteúdo em memória
+        # Salvar novo arquivo temporariamente
         with tempfile.NamedTemporaryFile(delete=False, suffix="_organizado.kml") as temp:
             tree.write(temp.name, encoding="utf-8", xml_declaration=True)
             with open(temp.name, "rb") as f:
@@ -67,28 +66,31 @@ def organizar_placemarks_por_pasta(conteudo_kml, sigla, pon_inicial):
         return None
 
 # Interface Streamlit
-st.title("Organizador de Placemarks KML")
+st.title("Organizador de Placemarks - KML")
 st.markdown("Organize os placemarks por subpastas e defina o valor inicial do **SUBGRUPO (PON INICIAL)**.")
 
+# Inputs do usuário
 sigla = st.text_input("Digite a sigla para os Placemarks:", "").strip().upper()
 pon_inicial = st.selectbox("Selecione a PON INICIAL (Subgrupo inicial):", options=[0, 1])
-
 arquivo_kml = st.file_uploader("Envie o arquivo KML", type=["kml"])
 
-if st.button("Organizar KML") and arquivo_kml and sigla:
-    conteudo_kml = arquivo_kml.read()
-    novo_arquivo = organizar_placemarks_por_pasta(conteudo_kml, sigla, pon_inicial)
+# Botão de processamento
+processar = st.button("Organizar KML")
 
-    if novo_arquivo:
-        st.success("Arquivo processado com sucesso!")
-        st.download_button(
-            label="Baixar KML Organizado",
-            data=novo_arquivo,
-            file_name=arquivo_kml.name.replace(".kml", "_organizado.kml"),
-            mime="application/vnd.google-earth.kml+xml"
-        )
-else:
-    if not arquivo_kml and st.button("Organizar KML"):
+if processar:
+    if not arquivo_kml:
         st.warning("Por favor, envie um arquivo KML.")
-    elif not sigla and st.button("Organizar KML"):
+    elif not sigla:
         st.warning("Por favor, insira a sigla para os placemarks.")
+    else:
+        conteudo_kml = arquivo_kml.read()
+        novo_arquivo = organizar_placemarks_por_pasta(conteudo_kml, sigla, pon_inicial)
+
+        if novo_arquivo:
+            st.success("Arquivo processado com sucesso!")
+            st.download_button(
+                label="Baixar KML Organizado",
+                data=novo_arquivo,
+                file_name=arquivo_kml.name.replace(".kml", "_organizado.kml"),
+                mime="application/vnd.google-earth.kml+xml"
+            )
