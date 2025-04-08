@@ -3,6 +3,7 @@ from xml.etree import ElementTree as ET
 import tempfile
 
 def remover_links_google_earth(root):
+    """Remove elementos <link> com referência ao Google Earth."""
     for parent in root.iter():
         for elem in list(parent):
             if elem.tag.endswith('link'):
@@ -11,53 +12,52 @@ def remover_links_google_earth(root):
                 if rel == "app" and "google.com/earth" in href:
                     parent.remove(elem)
 
-def organizar_placemarks_por_pasta(conteudo_kml, sigla, subgrupo_inicial, sequencia_inicial=1, pasta_contador_inicial=1, pon_base=0):
+def organizar_placemarks_por_pasta(conteudo_kml, sigla, pon_inicial, manual=False, seq_inicial=1, pasta_inicial=1, subgrupo_inicial=None):
+    """Organiza os placemarks por subpastas internas e ajusta nome e descrição."""
     try:
-        if pon_base not in [0, 1]:
-            st.error("O valor da PON BASE deve ser 0 ou 1.")
-            return None
-
         tree = ET.ElementTree(ET.fromstring(conteudo_kml))
         root = tree.getroot()
         ns = {"kml": "http://www.opengis.net/kml/2.2"}
         ET.register_namespace('', ns["kml"])
 
         folders = root.findall(".//kml:Folder/kml:Folder", ns)
-        sequencia_global = sequencia_inicial
+
+        sequencia_global = seq_inicial if manual else 1
+        pasta_contador = pasta_inicial if manual else 1
         rota_contador = 1
-        pasta_contador = pasta_contador_inicial
-        subgrupo = subgrupo_inicial
+        subgrupo = subgrupo_inicial if manual else pon_inicial
+        pon_base = pon_inicial  # para saber se o ciclo reinicia em 0 ou 1
 
         for i, folder in enumerate(folders):
-            # Incrementa pasta_contador a cada 16 folders
-            if i > 0 and i % 16 == 0:
-                pasta_contador += 1
-
             placemarks = folder.findall(".//kml:Placemark", ns)
 
             for contagem_local, placemark in enumerate(placemarks, start=1):
-                nome_formatado = f"ROTA-{rota_contador}_CTO-{contagem_local}"
-                desc_formatada = f"{sigla}-{sequencia_global:04d} (1/{pasta_contador}/{subgrupo}) CTO-{contagem_local}"
+                novo_nome = f"ROTA-{rota_contador}_CTO-{contagem_local}"
+                descricao_texto = f"{sigla}-{sequencia_global:04d} (1/{pasta_contador}/{subgrupo}) CTO-{contagem_local}"
                 sequencia_global += 1
 
                 nome = placemark.find("kml:name", ns)
                 if nome is None:
                     nome = ET.SubElement(placemark, f"{{{ns['kml']}}}name")
-                nome.text = nome_formatado
+                nome.text = novo_nome
 
                 descricao = placemark.find("kml:description", ns)
                 if descricao is None:
                     descricao = ET.SubElement(placemark, f"{{{ns['kml']}}}description")
-                descricao.text = desc_formatada
+                descricao.text = descricao_texto
 
             rota_contador += 1
 
-            # Subgrupo roda em ciclo de 16 (com base no pon_base)
+            # Subgrupo cíclico
             subgrupo += 1
             if pon_base == 0 and subgrupo > 15:
                 subgrupo = 0
             elif pon_base == 1 and subgrupo > 16:
                 subgrupo = 1
+
+            # Incrementa a cada 16 rotas
+            if rota_contador > 1 and (rota_contador - 1) % 16 == 0:
+                pasta_contador += 1
 
         remover_links_google_earth(root)
 
@@ -72,54 +72,58 @@ def organizar_placemarks_por_pasta(conteudo_kml, sigla, subgrupo_inicial, sequen
         st.error(f"Erro ao processar o arquivo: {e}")
         return None
 
-# ========== INTERFACE STREAMLIT ==========
-
+# --- Interface Streamlit ---
 st.title("Organizador de Placemarks - KML")
-st.markdown("Organize os placemarks por subpastas e defina o valor inicial do **SUBGRUPO (PON)**.")
+st.markdown("Organize os placemarks por subpastas e defina o valor inicial do **SUBGRUPO (PON INICIAL)**.")
 
+# Entradas básicas
 sigla = st.text_input("Digite a sigla para os Placemarks:", "").strip().upper()
+pon_inicial = st.selectbox("Selecione a PON INICIAL (Subgrupo reinício):", options=[0, 1])
+
+# Configuração manual
+manual = st.checkbox("Configuração Manual")
+if manual:
+    st.markdown("### Configurações Avançadas")
+    seq_inicial = st.number_input("Valor inicial para SEQUÊNCIA GLOBAL:", min_value=1, value=1)
+    pasta_inicial = st.number_input("Valor inicial para PASTA CONTADOR:", min_value=1, value=1)
+    max_subgrupo = 16 if pon_inicial == 1 else 15
+    subgrupo_inicial = st.number_input(
+        "Valor inicial para SUBGRUPO (PON):",
+        min_value=0, max_value=max_subgrupo, value=pon_inicial
+    )
+else:
+    seq_inicial = 1
+    pasta_inicial = 1
+    subgrupo_inicial = pon_inicial
+
+# Upload
 arquivo_kml = st.file_uploader("Envie o arquivo KML", type=["kml"])
-pon_inicial = st.selectbox("Selecione a PON INICIAL (0 ou 1):", options=[0, 1])
 
-# Configuração Manual
-config_manual = st.checkbox("Configuração Manual")
+# Botão
+processar = st.button("Organizar KML")
 
-if config_manual:
-    sequencia_manual = st.number_input("Sequência Global Inicial:", min_value=1, value=1, step=1)
-    pasta_manual = st.number_input("Pasta Contador Inicial:", min_value=1, value=1, step=1)
-    subgrupo_manual = st.number_input("Valor inicial para SUBGRUPO (PON):", min_value=0, value=pon_inicial, step=1)
-    
-else:
-    sequencia_manual = 1
-    subgrupo_manual = pon_inicial
-    pasta_manual = 1
+if processar:
+    if not arquivo_kml:
+        st.warning("Por favor, envie um arquivo KML.")
+    elif not sigla:
+        st.warning("Por favor, insira a sigla para os placemarks.")
+    else:
+        conteudo_kml = arquivo_kml.read()
+        novo_arquivo = organizar_placemarks_por_pasta(
+            conteudo_kml,
+            sigla,
+            pon_inicial,
+            manual=manual,
+            seq_inicial=seq_inicial,
+            pasta_inicial=pasta_inicial,
+            subgrupo_inicial=subgrupo_inicial
+        )
 
-# Validação de subgrupo
-limite_subgrupo = 15 if pon_inicial == 0 else 16
-if subgrupo_manual > limite_subgrupo:
-    st.error(f"O valor de SUBGRUPO (PON) deve ser no máximo {limite_subgrupo} para PON INICIAL = {pon_inicial}.")
-else:
-    if st.button("Organizar KML"):
-        if not arquivo_kml:
-            st.warning("Por favor, envie um arquivo KML.")
-        elif not sigla:
-            st.warning("Por favor, insira a sigla para os placemarks.")
-        else:
-            conteudo_kml = arquivo_kml.read()
-            novo_arquivo = organizar_placemarks_por_pasta(
-                conteudo_kml,
-                sigla,
-                subgrupo_manual,
-                sequencia_inicial=sequencia_manual,
-                pasta_contador_inicial=pasta_manual,
-                pon_base=pon_inicial
+        if novo_arquivo:
+            st.success("Arquivo processado com sucesso!")
+            st.download_button(
+                label="📥 Baixar KML Organizado",
+                data=novo_arquivo,
+                file_name=arquivo_kml.name.replace(".kml", "_organizado.kml"),
+                mime="application/vnd.google-earth.kml+xml"
             )
-
-            if novo_arquivo:
-                st.success("Arquivo processado com sucesso!")
-                st.download_button(
-                    label="Baixar KML Organizado",
-                    data=novo_arquivo,
-                    file_name=arquivo_kml.name.replace(".kml", "_organizado.kml"),
-                    mime="application/vnd.google-earth.kml+xml"
-                )
