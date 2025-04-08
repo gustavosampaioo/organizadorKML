@@ -22,11 +22,11 @@ def organizar_placemarks_por_pasta(conteudo_kml, sigla, pon_inicial, manual=Fals
 
         sequencia_global = seq_inicial if manual else 1
         pasta_contador = pasta_inicial if manual else 1
-        rota_contador = 1
         subgrupo = subgrupo_inicial if manual else pon_inicial
         pon_base = pon_inicial
+        rota_contador = 1
 
-        for i, folder in enumerate(folders):
+        for folder in folders:
             placemarks = folder.findall(".//kml:Placemark", ns)
 
             for contagem_local, placemark in enumerate(placemarks, start=1):
@@ -46,16 +46,11 @@ def organizar_placemarks_por_pasta(conteudo_kml, sigla, pon_inicial, manual=Fals
 
             rota_contador += 1
 
-            # Subgrupo cíclico
+            # Incrementar subgrupo e reiniciar conforme PON base
             subgrupo += 1
-            if pon_base == 0 and subgrupo > 15:
-                subgrupo = 0
-            elif pon_base == 1 and subgrupo > 16:
-                subgrupo = 1
-
-            # Incrementar pasta contador a cada 16 rotas
-            if (rota_contador - 1) % 16 == 0:
-                pasta_contador += 1
+            if (pon_base == 0 and subgrupo > 15) or (pon_base == 1 and subgrupo > 16):
+                subgrupo = pon_base
+                pasta_contador += 1  # Incrementa pasta_contador ao reiniciar subgrupo
 
         remover_links_google_earth(root)
 
@@ -77,7 +72,6 @@ st.markdown("Organize os placemarks por subpastas e defina o valor inicial do **
 sigla = st.text_input("Digite a sigla para os Placemarks:", "").strip().upper()
 pon_inicial = st.selectbox("Selecione a PON INICIAL (Subgrupo reinício):", options=[0, 1])
 
-# Configuração manual
 manual = st.checkbox("Configuração Manual")
 if manual:
     st.markdown("### Configurações Avançadas")
