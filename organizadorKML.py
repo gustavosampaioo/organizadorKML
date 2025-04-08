@@ -26,13 +26,10 @@ def organizar_placemarks_por_pasta(conteudo_kml, sigla, subgrupo_inicial, sequen
         sequencia_global = sequencia_inicial
         rota_contador = 1
         pasta_contador = pasta_contador_inicial
-
         subgrupo = subgrupo_inicial
-        valor_reinicio = pon_base
-        limite = 15 if pon_base == 0 else 16
-        limite_maximo = valor_reinicio + limite
 
         for i, folder in enumerate(folders):
+            # Incrementa pasta a cada 16 pastas
             if i > 0 and i % 16 == 0:
                 pasta_contador += 1
 
@@ -55,7 +52,7 @@ def organizar_placemarks_por_pasta(conteudo_kml, sigla, subgrupo_inicial, sequen
 
             rota_contador += 1
 
-            # Lógica de rotação baseada em PON BASE, sempre com ciclo fixo
+            # Avança e reinicia o subgrupo conforme lógica de PON base
             subgrupo += 1
             if pon_base == 0 and subgrupo > 15:
                 subgrupo = 0
@@ -76,36 +73,29 @@ def organizar_placemarks_por_pasta(conteudo_kml, sigla, subgrupo_inicial, sequen
         return None
 
 
+# ========== INTERFACE STREAMLIT ==========
 
-
-# Interface Streamlit
 st.title("Organizador de Placemarks - KML")
-st.markdown("Organize os placemarks por subpastas e defina o valor inicial do **SUBGRUPO (PON INICIAL)**.")
+st.markdown("Organize os placemarks por subpastas e defina o valor inicial do **SUBGRUPO (PON)**.")
 
-# Inputs
 sigla = st.text_input("Digite a sigla para os Placemarks:", "").strip().upper()
-pon_inicial = st.selectbox("Selecione a PON INICIAL (Subgrupo inicial):", options=[0, 1])
 arquivo_kml = st.file_uploader("Envie o arquivo KML", type=["kml"])
+pon_inicial = st.selectbox("Selecione a PON INICIAL (0 ou 1):", options=[0, 1])
 
-# Configuração Manual com session_state
-if "config_manual" not in st.session_state:
-    st.session_state.config_manual = False
+# Configuração Manual
+config_manual = st.checkbox("Configuração Manual")
 
-st.session_state.config_manual = st.checkbox("Configuração Manual", value=st.session_state.config_manual)
-
-if st.session_state.config_manual:
-    sequencia_global_manual = st.number_input("Valor inicial para SEQUÊNCIA GLOBAL:", min_value=1, value=1, step=1)
-    pasta_contador_manual = st.number_input("Valor inicial para PASTA CONTADOR:", min_value=1, value=1, step=1)
-    subgrupo_manual = st.number_input("Valor inicial para SUBGRUPO (PON):", min_value=0, value=pon_inicial, step=1)
+if config_manual:
+    sequencia_manual = st.number_input("Sequência Global Inicial:", min_value=1, value=1, step=1)
+    subgrupo_manual = st.number_input("Valor inicial para SUBGRUPO (PON):", min_value=0, value=0, step=1)
+    pasta_manual = st.number_input("Pasta Contador Inicial:", min_value=1, value=1, step=1)
 else:
-    sequencia_global_manual = 1
-    pasta_contador_manual = 1
+    sequencia_manual = 1
     subgrupo_manual = pon_inicial
+    pasta_manual = 1
 
-# Botão de processamento
-processar = st.button("Organizar KML")
-
-if processar:
+# Botão de Processamento
+if st.button("Organizar KML"):
     if not arquivo_kml:
         st.warning("Por favor, envie um arquivo KML.")
     elif not sigla:
@@ -115,9 +105,10 @@ if processar:
         novo_arquivo = organizar_placemarks_por_pasta(
             conteudo_kml,
             sigla,
-            subgrupo_inicial=subgrupo_manual,
-            sequencia_inicial=sequencia_global_manual,
-            pasta_contador_inicial=pasta_contador_manual
+            subgrupo_manual,
+            sequencia_inicial=sequencia_manual,
+            pasta_contador_inicial=pasta_manual,
+            pon_base=pon_inicial
         )
 
         if novo_arquivo:
