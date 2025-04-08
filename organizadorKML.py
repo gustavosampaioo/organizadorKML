@@ -13,6 +13,11 @@ def remover_links_google_earth(root):
 
 def organizar_placemarks_por_pasta(conteudo_kml, sigla, subgrupo_inicial, sequencia_inicial=1, pasta_contador_inicial=1):
     try:
+        # Validação do subgrupo
+        if not (0 <= subgrupo_inicial <= 16):
+            st.error("O valor do SUBGRUPO (PON) inicial deve estar entre 0 e 16.")
+            return None
+
         tree = ET.ElementTree(ET.fromstring(conteudo_kml))
         root = tree.getroot()
         ns = {"kml": "http://www.opengis.net/kml/2.2"}
@@ -21,16 +26,14 @@ def organizar_placemarks_por_pasta(conteudo_kml, sigla, subgrupo_inicial, sequen
         folders = root.findall(".//kml:Folder/kml:Folder", ns)
         sequencia_global = sequencia_inicial
         rota_contador = 1
+        pasta_contador_base = pasta_contador_inicial
 
-        # Define o subgrupo e seus limites
-        limite_subgrupo = 16 if subgrupo_inicial == 1 else 15
         subgrupo = subgrupo_inicial
         subgrupo_base = subgrupo_inicial
+        limite_subgrupo = 16  # Sempre reinicia a cada 16 passos
 
         for i, folder in enumerate(folders):
-            # pasta_contador avança como antes
-            pasta_contador = pasta_contador_inicial + (i // 16)
-
+            pasta_contador = pasta_contador_base + (i // 16)
             placemarks = folder.findall(".//kml:Placemark", ns)
 
             for contagem_local, placemark in enumerate(placemarks, start=1):
@@ -50,9 +53,9 @@ def organizar_placemarks_por_pasta(conteudo_kml, sigla, subgrupo_inicial, sequen
 
             rota_contador += 1
 
-            # lógica de rotação de subgrupo manual
+            # Incrementa e reinicia o subgrupo manualmente baseado apenas no valor inicial
             subgrupo += 1
-            if subgrupo > subgrupo_base + limite_subgrupo - 1:
+            if subgrupo >= subgrupo_base + limite_subgrupo:
                 subgrupo = subgrupo_base
 
         remover_links_google_earth(root)
@@ -67,6 +70,7 @@ def organizar_placemarks_por_pasta(conteudo_kml, sigla, subgrupo_inicial, sequen
     except Exception as e:
         st.error(f"Erro ao processar o arquivo: {e}")
         return None
+
 
 # Interface Streamlit
 st.title("Organizador de Placemarks - KML")
