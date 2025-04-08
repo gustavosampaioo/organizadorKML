@@ -20,12 +20,15 @@ def organizar_placemarks_por_pasta(conteudo_kml, sigla, subgrupo_inicial, sequen
 
         folders = root.findall(".//kml:Folder/kml:Folder", ns)
         sequencia_global = sequencia_inicial
-        subgrupo = subgrupo_inicial
-
         rota_contador = 1
 
+        # Define o subgrupo e seus limites
+        limite_subgrupo = 16 if subgrupo_inicial == 1 else 15
+        subgrupo = subgrupo_inicial
+        subgrupo_base = subgrupo_inicial
+
         for i, folder in enumerate(folders):
-            # pasta_contador começa do valor inicial, mas ainda incrementa a cada 16 pastas
+            # pasta_contador avança como antes
             pasta_contador = pasta_contador_inicial + (i // 16)
 
             placemarks = folder.findall(".//kml:Placemark", ns)
@@ -46,7 +49,11 @@ def organizar_placemarks_por_pasta(conteudo_kml, sigla, subgrupo_inicial, sequen
                 descricao.text = descricao_texto
 
             rota_contador += 1
-            subgrupo += 1  # subgrupo ainda avança a cada folder
+
+            # lógica de rotação de subgrupo manual
+            subgrupo += 1
+            if subgrupo > subgrupo_base + limite_subgrupo - 1:
+                subgrupo = subgrupo_base
 
         remover_links_google_earth(root)
 
@@ -56,6 +63,11 @@ def organizar_placemarks_por_pasta(conteudo_kml, sigla, subgrupo_inicial, sequen
                 novo_conteudo = f.read()
 
         return novo_conteudo
+
+    except Exception as e:
+        st.error(f"Erro ao processar o arquivo: {e}")
+        return None
+
 
     except Exception as e:
         st.error(f"Erro ao processar o arquivo: {e}")
