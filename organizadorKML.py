@@ -11,7 +11,7 @@ def remover_links_google_earth(root):
                 if rel == "app" and "google.com/earth" in href:
                     parent.remove(elem)
 
-def organizar_placemarks_por_pasta(conteudo_kml, sigla, pon_inicial, manual=False, seq_inicial=1, pasta_inicial=1, subgrupo_inicial=None):
+def organizar_placemarks_por_pasta(conteudo_kml, sigla, pon_inicial, manual=False, seq_inicial=1, pasta_inicial=1, subgrupo_inicial=None, rota_inicial=1):
     try:
         tree = ET.ElementTree(ET.fromstring(conteudo_kml))
         root = tree.getroot()
@@ -24,7 +24,7 @@ def organizar_placemarks_por_pasta(conteudo_kml, sigla, pon_inicial, manual=Fals
         pasta_contador = pasta_inicial if manual else 1
         subgrupo = subgrupo_inicial if manual else pon_inicial
         pon_base = pon_inicial
-        rota_contador = 1
+        rota_contador = rota_inicial if manual else 1
 
         for folder in folders:
             placemarks = folder.findall(".//kml:Placemark", ns)
@@ -50,7 +50,7 @@ def organizar_placemarks_por_pasta(conteudo_kml, sigla, pon_inicial, manual=Fals
             subgrupo += 1
             if (pon_base == 0 and subgrupo > 15) or (pon_base == 1 and subgrupo > 16):
                 subgrupo = pon_base
-                pasta_contador += 1  # Incrementa pasta_contador ao reiniciar subgrupo
+                pasta_contador += 1
 
         remover_links_google_earth(root)
 
@@ -77,6 +77,7 @@ if manual:
     st.markdown("### Configurações Avançadas")
     seq_inicial = st.number_input("Valor inicial para SEQUÊNCIA GLOBAL:", min_value=1, value=1)
     pasta_inicial = st.number_input("Valor inicial para PASTA CONTADOR:", min_value=1, value=1)
+    rota_inicial = st.number_input("Valor inicial para ROTA:", min_value=1, value=1)
     max_subgrupo = 16 if pon_inicial == 1 else 15
     subgrupo_inicial = st.number_input(
         "Valor inicial para SUBGRUPO (PON):",
@@ -86,6 +87,7 @@ else:
     seq_inicial = 1
     pasta_inicial = 1
     subgrupo_inicial = pon_inicial
+    rota_inicial = 1
 
 arquivo_kml = st.file_uploader("Envie o arquivo KML", type=["kml"])
 processar = st.button("Organizar KML")
@@ -104,7 +106,8 @@ if processar:
             manual=manual,
             seq_inicial=seq_inicial,
             pasta_inicial=pasta_inicial,
-            subgrupo_inicial=subgrupo_inicial
+            subgrupo_inicial=subgrupo_inicial,
+            rota_inicial=rota_inicial
         )
 
         if novo_arquivo:
