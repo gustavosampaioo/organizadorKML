@@ -11,7 +11,7 @@ def remover_links_google_earth(root):
                 if rel == "app" and "google.com/earth" in href:
                     parent.remove(elem)
 
-def organizar_placemarks_por_pasta(conteudo_kml, sigla, subgrupo, sequencia_inicial=1, pasta_contador_inicial=1):
+def organizar_placemarks_por_pasta(conteudo_kml, sigla, subgrupo_inicial, sequencia_inicial=1, pasta_contador_inicial=1):
     try:
         tree = ET.ElementTree(ET.fromstring(conteudo_kml))
         root = tree.getroot()
@@ -20,12 +20,13 @@ def organizar_placemarks_por_pasta(conteudo_kml, sigla, subgrupo, sequencia_inic
 
         folders = root.findall(".//kml:Folder/kml:Folder", ns)
         sequencia_global = sequencia_inicial
-        pasta_contador = pasta_contador_inicial
+        subgrupo = subgrupo_inicial
+
         rota_contador = 1
 
         for i, folder in enumerate(folders):
-            if i > 0 and i % 16 == 0:
-                pasta_contador += 1
+            # pasta_contador começa do valor inicial, mas ainda incrementa a cada 16 pastas
+            pasta_contador = pasta_contador_inicial + (i // 16)
 
             placemarks = folder.findall(".//kml:Placemark", ns)
 
@@ -45,7 +46,7 @@ def organizar_placemarks_por_pasta(conteudo_kml, sigla, subgrupo, sequencia_inic
                 descricao.text = descricao_texto
 
             rota_contador += 1
-            subgrupo += 1
+            subgrupo += 1  # subgrupo ainda avança a cada folder
 
         remover_links_google_earth(root)
 
@@ -55,6 +56,11 @@ def organizar_placemarks_por_pasta(conteudo_kml, sigla, subgrupo, sequencia_inic
                 novo_conteudo = f.read()
 
         return novo_conteudo
+
+    except Exception as e:
+        st.error(f"Erro ao processar o arquivo: {e}")
+        return None
+
 
     except Exception as e:
         st.error(f"Erro ao processar o arquivo: {e}")
